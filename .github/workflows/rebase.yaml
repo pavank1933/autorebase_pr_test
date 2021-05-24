@@ -1,48 +1,28 @@
-name: Auto_Rebase_PR_TEST
-
-on: [push, pull_request]
+on:
+    # Run on every push on every branch
+    push:
+        branches-ignore:
+            # Ignore branches automatically created by github-rebase
+            - rebase-pull-request**
+            - cherry-pick-rebase-pull-request**
+    # Run when pull requests get labeled
+    pull_request:
+        types: [labeled]
 
 jobs:
-  auto-rebase-job:
-    name: pr-rebase-job
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Run Script
-        run: |
-          touch test1.txt
-          chmod a+x test1.txt
-          git init
-          prog=$(basename test1.txt)
-          #prog=$(basename $0)
-          echo $prog
-          echo "Listing Files..."
-          ls -ltr
-          branch=$(git rev-parse --abbrev-ref HEAD)
+    auto-rebase:
+        name: AutoRebase
+        runs-on: ubuntu-latest
+        steps:
+            - name: Auto rebase
+            - uses: Label305/AutoRebase@0.1.6
+              with:
+                  # We can't use the built-in secrets.GITHUB_TOKEN yet because of this limitation:
+                  # https://github.community/t5/GitHub-Actions/Triggering-a-new-workflow-from-another-workflow/td-p/31676
+                  # In the meantime, use a token granting write access on the repo:
+                  # - a GitHub App token
+                  #   See https://github.com/marketplace/actions/github-app-token.
+                  # - a personal access token
+                  #   See https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line.
+                  github_token: ${{ secrets.AUTOREBASE_TOKEN }}
 
-          if [ "$branch" == "master" ]; then
-            echo Already on master. Exiting.
-            exit 0
-          fi
-
-          need_to_stash=$(git status --porcelain|grep -v '^??')
-          if [[ $need_to_stash ]]; then
-            git stash save "stashed by $prog"
-          fi
-          git checkout master
-          git fetch -p
-          git pull --ff-only
-          git checkout $branch
-
-          if [[ $(git rebase master) ]]; then
-            if [[ $need_to_stash ]]; then
-              git stash pop
-            fi
-          else
-            echo git rebase failed.
-            if [[ $need_to_stash ]]; then
-              echo You have changes stashed by $prog
-            fi
-          fi
