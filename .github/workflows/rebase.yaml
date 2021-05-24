@@ -1,0 +1,44 @@
+name: Auto_Rebase_PR_TEST
+
+on: [push, pull_request]
+
+jobs:
+  auto-rebase-job:
+    name: pr-rebase-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Script
+        run: |
+          #touch test1.txt
+          #chmod a+x test1.txt
+          #git init
+          prog=$(basename $0)
+          echo $prog
+          echo "Listing Files..."
+          ls -ltr
+          branch=$(git rev-parse --abbrev-ref HEAD)
+
+          if [ "$branch" == "master" ]; then
+            echo Already on master. Exiting.
+            exit 0
+          fi
+
+          need_to_stash=$(git status --porcelain|grep -v '^??')
+          if [[ $need_to_stash ]]; then
+            git stash save "stashed by $prog"
+          fi
+          git checkout master
+          git fetch -p
+          git pull --ff-only
+          git checkout $branch
+
+          if [[ $(git rebase master) ]]; then
+            if [[ $need_to_stash ]]; then
+              git stash pop
+            fi
+          else
+            echo git rebase failed.
+            if [[ $need_to_stash ]]; then
+              echo You have changes stashed by $prog
+            fi
+          fi
