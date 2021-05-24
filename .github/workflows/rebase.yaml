@@ -7,6 +7,9 @@ jobs:
     name: pr-rebase-job
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Run Script
         run: |
           touch test1.txt
