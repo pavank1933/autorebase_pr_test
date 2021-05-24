@@ -9,10 +9,11 @@ jobs:
     steps:
       - name: Run Script
         run: |
-          #touch test1.txt
-          #chmod a+x test1.txt
-          #git init
-          prog=$(basename $0)
+          touch test1.txt
+          chmod a+x test1.txt
+          git init
+          prog=$(basename test1.txt)
+          #prog=$(basename $0)
           echo $prog
           echo "Listing Files..."
           ls -ltr
