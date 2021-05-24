@@ -1,4 +1,3 @@
-name: Autosquash
 on:
   check_run:
     types:
